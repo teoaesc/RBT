@@ -1,0 +1,319 @@
+public class RBT<T extends Comparable<T>> {
+    public Nodo<T> root;
+    public int size;
+
+    public RBT() {
+        this.root = null;
+        this.size = 0;
+    }
+
+    public void insert(T elemento) {
+        Nodo<T> newNode = new Nodo<>(elemento);
+        Nodo<T> y = null;
+        Nodo<T> x = this.root;
+        while (x != null) {
+            y = x;
+            if (elemento.compareTo(x.elemento) < 0) x = x.left;
+                else x = x.right;
+        }
+        newNode.parent = y;
+        if (y == null) {
+            this.root = newNode;
+                } else if (elemento.compareTo(y.elemento) < 0) {
+                    y.left = newNode;
+                } else {
+                    y.right = newNode;
+        }
+
+        this.size++;
+        insertvalidar(newNode);
+    }
+
+    private void insertvalidar(Nodo<T> z) {
+        while (z != root && isRed(z.parent)) {
+            Nodo<T> parent = z.parent;
+            Nodo<T> grand = parent != null ? parent.parent : null;
+            if (grand == null) break;
+
+            if (parent == grand.left) {
+                Nodo<T> uncle = grand.right;
+                if (isRed(uncle)) {
+                    setBlack(parent);
+                        setBlack(uncle);
+                            setRed(grand);
+                                z = grand;
+                } else {
+                    if (z == parent.right) {
+                        z = parent;
+                            leftRotate(z);
+                                parent = z.parent;
+                                    grand = parent != null ? parent.parent : null;
+                    }
+                    setBlack(parent);
+                            setRed(grand);
+                                rightRotate(grand);
+                }
+            } else {
+                Nodo<T> uncle = grand.left;
+                if (isRed(uncle)) {
+                        setBlack(parent);
+                            setBlack(uncle);
+                                setRed(grand);
+                    z = grand;
+                } else {
+                    if (z == parent.left) {
+                        z = parent;
+                            rightRotate(z);
+                                parent = z.parent;
+                                    grand = parent != null ? parent.parent : null;
+                    }
+                    setBlack(parent);
+                        setRed(grand);
+                            leftRotate(grand);
+                }
+            }
+        }
+        if (root != null) setBlack(root);
+    }
+
+    private void leftRotate(Nodo<T> x) {
+        if (x == null) return;
+        Nodo<T> y = x.right;
+        if (y == null) return;
+        x.right = y.left;
+        if (y.left != null) y.left.parent = x;
+
+            y.parent = x.parent;
+            if (x.parent == null) this.root = y;
+            else if (x == x.parent.left) x.parent.left = y;
+            else x.parent.right = y;
+
+                    y.left = x;
+                    x.parent = y;
+    }
+
+    private void rightRotate(Nodo<T> x) {
+        if (x == null) return;
+        Nodo<T> y = x.left;
+        if (y == null) return;
+
+            x.left = y.right;
+            if (y.right != null) y.right.parent = x;
+
+                y.parent = x.parent;
+                if (x.parent == null) this.root = y;
+                else if (x == x.parent.right) x.parent.right = y;
+                else x.parent.left = y;
+
+                        y.right = x;
+                        x.parent = y;
+    }
+
+    public Nodo<T> getMinimo() {
+        if (root == null) return null;
+            return arbolmin(root);
+    }
+
+    private Nodo<T> arbolmin(Nodo<T> node) {
+        Nodo<T> cur = node;
+        while (cur.left != null) cur = cur.left;
+            return cur;
+    }
+
+    public Nodo<T> getMaximo() {
+        if (root == null) return null;
+            return arbolmax(root);
+    }
+
+    private Nodo<T> arbolmax(Nodo<T> node) {
+        Nodo<T> cur = node;
+            while (cur.right != null) cur = cur.right;
+                return cur;
+    }
+
+    public Nodo<T> search(T key) {
+        return searchRec(root, key);
+    }
+
+    private Nodo<T> searchRec(Nodo<T> node, T key) {
+        if (node == null) return null;
+            if (key.equals(node.elemento)) return node;
+                if (key.compareTo(node.elemento) < 0) return searchRec(node.left, key);
+                    else return searchRec(node.right, key);
+    }
+
+    public Nodo<T> getSucesor(Nodo<T> nodo) {
+        if (nodo == null) return null;
+            if (nodo.right != null) return arbolmin(nodo.right);
+            Nodo<T> actual = nodo.parent;
+            Nodo<T> child = nodo;
+                while (actual != null && child == actual.right) {
+                    child = actual;
+                    actual = actual.parent;
+                }
+                    return actual;
+    }
+
+    public boolean deletevalidar(T elemento) {
+        Nodo<T> z = search(elemento);
+            if (z == null) return false;
+                delete(z);
+                    return true;
+    }
+
+    private void delete(Nodo<T> z) {
+        Nodo<T> y = z;
+        boolean yOriginalBlack = isBlack(y);
+        Nodo<T> x = null;
+        Nodo<T> xParent = null;
+
+        if (z.left == null) {
+            x = z.right;
+            xParent = z.parent;
+            correccionnodo(z, z.right);
+                } else if (z.right == null) {
+                    x = z.left;
+                    xParent = z.parent;
+                    correccionnodo(z, z.left);
+                    } else {
+                        y = arbolmin(z.right);
+                        yOriginalBlack = isBlack(y);
+                        x = y.right;
+                        if (y.parent == z) {
+                            xParent = y;
+                        } else {
+                                xParent = y.parent;
+                                correccionnodo(y, y.right);
+                                y.right = z.right;
+                                if (y.right != null) y.right.parent = y;
+                            }
+            correccionnodo(z, y);
+            y.left = z.left;
+            if (y.left != null) y.left.parent = y;
+            y.color = z.color;
+                    }
+                    size--;
+
+                    if (yOriginalBlack) {
+                        deletecorrecciones(x, xParent);
+                    }
+    }
+
+    private void correccionnodo(Nodo<T> u, Nodo<T> v) {
+        if (u.parent == null) {
+            this.root = v;
+        } else if (u == u.parent.left) {
+            u.parent.left = v;
+        } else {
+            u.parent.right = v;
+        }
+        if (v != null) v.parent = u.parent;
+    }
+
+    private void deletecorrecciones(Nodo<T> x, Nodo<T> xParent) {
+        while ((x != root) && isBlack(x)) {
+            Nodo<T> w;
+            if (xParent == null) break;
+
+                if (x == xParent.left) {
+                    w = xParent.right;
+                    if (isRed(w)) {
+                        setBlack(w);
+                        setRed(xParent);
+                        leftRotate(xParent);
+                        w = xParent.right;
+                    }
+                        if (isBlack(w == null ? null : w.left) && isBlack(w == null ? null : w.right)) {
+                            if (w != null) setRed(w);
+                            x = xParent;
+                            xParent = x.parent;
+                        } else {
+                                if (isBlack(w == null ? null : w.right)) {
+                                    if (w != null) {
+                                        setBlack(w.left);
+                                        setRed(w);
+                                        rightRotate(w);
+                                        w = xParent.right;
+                                }
+                            }
+                            if (w != null) {
+                                w.color = xParent.color;
+                            }
+                            setBlack(xParent);
+                            if (w != null && w.right != null) setBlack(w.right);
+                            leftRotate(xParent);
+                            x = root;
+                            xParent = null;
+                        }
+                    } else {
+                        w = xParent.left;
+                        if (isRed(w)) {
+                            setBlack(w);
+                            setRed(xParent);
+                            rightRotate(xParent);
+                            w = xParent.left;
+                        }
+                        if (isBlack(w == null ? null : w.left) && isBlack(w == null ? null : w.right)) {
+                            if (w != null) setRed(w);
+                            x = xParent;
+                            xParent = x.parent;
+                        } else {
+                            if (isBlack(w == null ? null : w.left)) {
+                                if (w != null) {
+                                    setBlack(w.right);
+                                    setRed(w);
+                                    leftRotate(w);
+                                    w = xParent.left;
+                                }
+                            }
+                            if (w != null) {
+                                w.color = xParent.color;
+                            }
+                            setBlack(xParent);
+                            if (w != null && w.left != null) setBlack(w.left);
+                            rightRotate(xParent);
+                            x = root;
+                            xParent = null;
+                        }
+                    }
+                }
+                if (x != null) setBlack(x);
+        }
+
+    public void inOrder() {
+        if (root == null) {
+            System.out.println("El arbol esta vacio");
+            return;
+        }
+        inOrderRecursivo(root);
+    }
+
+    private void inOrderRecursivo(Nodo<T> nodo) {
+        if (nodo == null) return;
+            if (nodo.left != null) inOrderRecursivo(nodo.left);
+            System.out.println(nodo.elemento + " (" + (nodo.color == java.awt.Color.RED ? "R" : "B") + ")");
+                if (nodo.right != null) inOrderRecursivo(nodo.right);
+    }
+
+
+    private boolean isRed(Nodo<T> n) {
+        return n != null && java.awt.Color.RED.equals(n.color);
+    }
+
+    private boolean isBlack(Nodo<T> n) {
+        return n == null || java.awt.Color.BLACK.equals(n.color);
+    }
+
+    private void setBlack(Nodo<T> n) {
+        if (n != null) n.color = java.awt.Color.BLACK;
+    }
+
+    private void setRed(Nodo<T> n) {
+        if (n != null) n.color = java.awt.Color.RED;
+    }
+
+    public T compdelete(T elemento) {
+        boolean removed = deletevalidar(elemento);
+            return removed ? elemento : null;
+    }
+}
